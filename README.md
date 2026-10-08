@@ -1,4 +1,4 @@
-# codex-llamacpp-proxy
+# LlamaProxy for Codex
 
 Small HTTP proxy that receives Chat Completions and Responses API requests and forwards them to the API supported by `llama-server`. It preserves the current routes and conversions, including SSE streaming and function calling.
 
