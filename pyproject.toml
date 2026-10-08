@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "codex-llamacpp-proxy"
 version = "0.1.0"
 description = "Responses API to llama.cpp Chat Completions proxy for Codex Desktop."
-readme = "README.md"
+readme = "README.es.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
 authors = [
@@ -22,7 +22,7 @@ dev = [
 ]
 
 [project.scripts]
-codex-llamacpp-proxy = "codex_llamacpp_proxy.proxy:main"
+codex-llamacpp-proxy = "codex_llamacpp_proxy.server:main"
 
 [tool.pytest.ini_options]
 addopts = "--cov=codex_llamacpp_proxy"
