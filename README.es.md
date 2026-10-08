@@ -125,3 +125,7 @@ uv run --group dev ruff format --check .
 ## Alcance pendiente
 
 La conversión de herramientas existente está en `tools.py`; los wrappers genéricos de herramientas Responses API permanecen allí sin cambios funcionales. No se implementa ejecución de herramientas, MCP, soporte de namespace ni búsqueda web. La conversión de mensajes Responses API está en `conversion.py` y el transporte a llama.cpp en `upstream.py`; esos son los puntos de extensión para trabajo posterior.
+
+## Créditos
+
+Este proyecto está basado en el [codex-llamacpp-proxy original](https://github.com/sasasin/codex-llamacpp-proxy). Gracias a su autor y colaboradores por su trabajo.

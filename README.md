@@ -125,3 +125,7 @@ uv run --group dev ruff format --check .
 ## Out of scope
 
 The existing tool conversion is in `tools.py`; generic Responses API tool wrappers remain unchanged. The proxy does not execute tools, implement MCP, namespace support, or web search. Responses API message conversion is in `conversion.py`, and llama.cpp transport is in `upstream.py`; these are the extension points for future work.
+
+## Credits
+
+This project is based on the original [codex-llamacpp-proxy](https://github.com/sasasin/codex-llamacpp-proxy). Thanks to its author and contributors for their work.
