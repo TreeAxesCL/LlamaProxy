@@ -2,6 +2,11 @@
 
 Proxy HTTP pequeño que recibe solicitudes de Chat Completions y Responses API, y las reenvía a la API compatible de `llama-server`. Conserva las rutas y conversiones actuales del proyecto, incluido el streaming SSE y function calling.
 
+## Idioma
+
+- 🇪🇸 Español
+- 🇺🇸 [English](README.md)
+
 ## Arquitectura
 
 ```text
