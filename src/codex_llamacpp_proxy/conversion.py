@@ -18,27 +18,34 @@ def text_from_content_part(part: Any) -> str:
     part_type = part.get("type")
     if part_type in {"input_text", "output_text", "text"}:
         return str(part.get("text") or "")
+
     if part_type in {"input_image", "image_url"}:
         return "[image omitted by local proxy]"
+
     if part_type in {"file", "input_file"}:
         name = part.get("filename") or part.get("file_id") or "file"
         return f"[file omitted by local proxy: {name}]"
+
     if part_type in {"function_call_output", "tool_result"}:
         return str(part.get("output") or part.get("content") or "")
+
     return str(part.get("text") or part.get("content") or "")
 
 
 def normalize_role(role: str | None) -> str:
     if role in {"system", "user", "assistant", "tool"}:
         return role
+
     if role == "developer":
         return "system"
+
     return "user"
 
 
 def input_item_to_message(item: Any) -> dict[str, Any] | None:
     if isinstance(item, str):
         return {"role": "user", "content": item}
+
     if not isinstance(item, dict):
         return None
 
@@ -46,13 +53,16 @@ def input_item_to_message(item: Any) -> dict[str, Any] | None:
     if item_type == "message" or "role" in item:
         role = normalize_role(item.get("role"))
         content = item.get("content", "")
+
         if isinstance(content, list):
             content = "\n".join(
                 filter(None, (text_from_content_part(part) for part in content))
             )
+
         elif not isinstance(content, str):
             content = text_from_content_part(content)
         message: dict[str, Any] = {"role": role, "content": content}
+
         if role == "tool" and item.get("call_id"):
             message["tool_call_id"] = item["call_id"]
         return message
@@ -76,6 +86,7 @@ def input_item_to_message(item: Any) -> dict[str, Any] | None:
     if item_type in {"function_call_output", "tool_result"}:
         content = str(item.get("output") or item.get("content") or "")
         message = {"role": "tool", "content": content}
+
         if item.get("call_id"):
             message["tool_call_id"] = item["call_id"]
         return message
@@ -96,11 +107,13 @@ def responses_input_to_messages(payload: dict[str, Any]) -> list[dict[str, Any]]
     input_value = payload.get("input", "")
     if isinstance(input_value, str):
         messages.append({"role": "user", "content": input_value})
+
     elif isinstance(input_value, list):
         for item in input_value:
             message = input_item_to_message(item)
             if message is not None:
                 messages.append(message)
+
     elif isinstance(input_value, dict):
         message = input_item_to_message(input_value)
         if message is not None:
@@ -109,6 +122,7 @@ def responses_input_to_messages(payload: dict[str, Any]) -> list[dict[str, Any]]
     if not messages:
         messages.append({"role": "user", "content": ""})
     messages = strip_assistant_prefill(messages)
+
     return messages
 
 
@@ -184,37 +198,42 @@ def responses_to_chat_request(
 
 def chat_message_to_output_text(message: dict[str, Any]) -> str:
     content = message.get("content")
+
     if isinstance(content, str):
         return content
+
     if isinstance(content, list):
         return "\n".join(
             filter(None, (text_from_content_part(part) for part in content))
         )
+
     return "" if content is None else str(content)
 
 
 def normalize_tool_arguments(arguments: Any) -> str:
     if isinstance(arguments, str):
         return arguments
+
     if arguments is None:
         return "{}"
+
     return json.dumps(arguments, ensure_ascii=False)
 
 
 def chat_tool_calls_to_response_items(message: dict[str, Any]) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
     tool_calls = message.get("tool_calls")
+
     if not isinstance(tool_calls, list):
         return items
 
     for tool_call in tool_calls:
         if not isinstance(tool_call, dict):
             continue
-        function = (
-            tool_call.get("function")
-            if isinstance(tool_call.get("function"), dict)
-            else {}
-        )
+
+        function_value = tool_call.get("function")
+        function = function_value if isinstance(function_value, dict) else {}
+
         name = function.get("name") or tool_call.get("name")
         if not name:
             continue
@@ -229,6 +248,7 @@ def chat_tool_calls_to_response_items(message: dict[str, Any]) -> list[dict[str,
                 ),
             }
         )
+
     return items
 
 
@@ -240,11 +260,13 @@ def responses_usage_from_chat_usage(usage: Any) -> dict[str, Any]:
     output_tokens = int(
         usage.get("output_tokens") or usage.get("completion_tokens") or 0
     )
+
     total_tokens = int(usage.get("total_tokens") or (input_tokens + output_tokens))
 
     input_details = usage.get("input_tokens_details")
     if not isinstance(input_details, dict):
         input_details = {}
+
     output_details = usage.get("output_tokens_details")
     if not isinstance(output_details, dict):
         output_details = {}
@@ -273,6 +295,7 @@ def responses_payload_from_chat(
     choice = (chat_payload.get("choices") or [{}])[0]
     message = choice.get("message") or {}
     text = chat_message_to_output_text(message)
+
     output_items = chat_tool_calls_to_response_items(message)
     if text or not output_items:
         oid = output_id()
@@ -286,6 +309,7 @@ def responses_payload_from_chat(
                 "content": [{"type": "output_text", "text": text, "annotations": []}],
             },
         )
+
     created = chat_payload.get("created") or now_unix()
     usage = responses_usage_from_chat_usage(chat_payload.get("usage"))
 
@@ -349,6 +373,7 @@ def stream_response_object(
                 if content
                 else {"type": "output_text", "text": "", "annotations": []}
             )
+
             text = str(part.get("text") or "")
             handler.wfile.write(
                 sse_frame(
@@ -362,6 +387,7 @@ def stream_response_object(
                     },
                 )
             )
+
             if text:
                 handler.wfile.write(
                     sse_frame(
@@ -375,6 +401,7 @@ def stream_response_object(
                         },
                     )
                 )
+
             handler.wfile.write(
                 sse_frame(
                     "response.output_text.done",
@@ -387,6 +414,7 @@ def stream_response_object(
                     },
                 )
             )
+
             handler.wfile.write(
                 sse_frame(
                     "response.content_part.done",
@@ -416,5 +444,6 @@ def stream_response_object(
             "response.completed", {"type": "response.completed", "response": response}
         )
     )
+
     handler.wfile.write(sse_done())
     handler.wfile.flush()

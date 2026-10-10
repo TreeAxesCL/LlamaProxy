@@ -31,20 +31,28 @@ class ConfigError(ValueError):
 def _validate(config: Config) -> Config:
     if isinstance(config.port, bool) or not isinstance(config.port, int):
         raise ConfigError("port must be an integer")
+
     if not 1 <= config.port <= 65535:
         raise ConfigError("port must be between 1 and 65535")
+
     if not isinstance(config.host, str) or not config.host.strip():
         raise ConfigError("host must not be empty")
+
     if not isinstance(config.llama_base_url, str):
         raise ConfigError("llama base URL must be a string")
+
     url = config.llama_base_url.rstrip("/")
     parsed = urlsplit(url)
+
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise ConfigError("llama base URL must be an absolute HTTP or HTTPS URL")
+
     if not isinstance(config.debug, bool):
         raise ConfigError("proxy.debug must be a boolean")
+
     if config.model is not None and not isinstance(config.model, str):
         raise ConfigError("llama.model must be a string")
+
     return replace(config, llama_base_url=url)
 
 
@@ -52,8 +60,10 @@ def _read_toml(path: Path) -> Config:
     try:
         with path.open("rb") as file:
             data = tomllib.load(file)
+
     except OSError as exc:
         raise ConfigError(f"cannot read config file {path}: {exc}") from exc
+
     except tomllib.TOMLDecodeError as exc:
         raise ConfigError(f"invalid TOML in {path}: {exc}") from exc
 
@@ -61,6 +71,7 @@ def _read_toml(path: Path) -> Config:
         server = data.get("server", {})
         llama = data.get("llama", {})
         proxy = data.get("proxy", {})
+
         return Config(
             host=server.get("host", DEFAULT_HOST),
             port=server.get("port", DEFAULT_PORT),
@@ -68,6 +79,7 @@ def _read_toml(path: Path) -> Config:
             model=llama.get("model") or None,
             debug=proxy.get("debug", False),
         )
+
     except AttributeError as exc:
         raise ConfigError("config sections must be TOML tables") from exc
 
@@ -97,8 +109,10 @@ def load_config(
             debug=env.get("PROXY_DEBUG", str(base.debug)).lower()
             in {"1", "true", "yes", "on"},
         )
+
     except ValueError as exc:
         raise ConfigError(f"invalid environment configuration: {exc}") from exc
+
     return _validate(
         replace(
             configured,

@@ -52,8 +52,10 @@ def error_payload(message: str, status: int = 400, code: str = "proxy_error") ->
 def read_json(handler: BaseHTTPRequestHandler) -> dict[str, Any]:
     length = int(handler.headers.get("content-length") or 0)
     raw = handler.rfile.read(length) if length else b"{}"
+
     if not raw:
         return {}
+
     return json.loads(raw.decode("utf-8"))
 
 

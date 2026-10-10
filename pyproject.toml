@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "codex-llamacpp-proxy"
-version = "0.1.0"
-description = "Responses API to llama.cpp Chat Completions proxy for Codex Desktop."
+name = "llamaproxy"
+version = "1.0.0"
+description = "Integrates Codex with llama.cpp, enabling the use of LLMs in a local environment."
 readme = "README.es.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }

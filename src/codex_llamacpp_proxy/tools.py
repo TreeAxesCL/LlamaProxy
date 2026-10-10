@@ -23,8 +23,10 @@ def convert_tool(tool: Any) -> dict[str, Any] | None:
 
     if not function.get("name"):
         return None
+
     if not isinstance(function.get("parameters"), dict):
         function["parameters"] = {}
+
     return {"type": "function", "function": function}
 
 
@@ -32,8 +34,10 @@ def sanitize_function_name(value: Any) -> str:
     name = re.sub(r"[^A-Za-z0-9_-]+", "_", str(value or "tool")).strip("_")
     if not name:
         name = "tool"
+
     if len(name) > 64:
         name = name[:64].rstrip("_-") or "tool"
+
     return name
 
 
@@ -50,6 +54,7 @@ def default_parameters_for_responses_tool(tool_type: str) -> dict[str, Any]:
             "required": ["query"],
             "additionalProperties": True,
         }
+
     if "image_generation" in tool_type or "image" in tool_type:
         return {
             "type": "object",
@@ -62,6 +67,7 @@ def default_parameters_for_responses_tool(tool_type: str) -> dict[str, Any]:
             "required": ["prompt"],
             "additionalProperties": True,
         }
+
     if "computer" in tool_type:
         return {
             "type": "object",
@@ -74,6 +80,7 @@ def default_parameters_for_responses_tool(tool_type: str) -> dict[str, Any]:
             "required": ["action"],
             "additionalProperties": True,
         }
+
     return {
         "type": "object",
         "properties": {},
@@ -84,9 +91,11 @@ def default_parameters_for_responses_tool(tool_type: str) -> dict[str, Any]:
 def wrap_responses_tool_as_function(tool: dict[str, Any]) -> dict[str, Any] | None:
     tool_type = str(tool.get("type") or "tool")
     name = sanitize_function_name(tool.get("name") or tool_type)
+
     parameters = (
         tool.get("parameters") or tool.get("input_schema") or tool.get("schema")
     )
+
     if not isinstance(parameters, dict):
         parameters = default_parameters_for_responses_tool(tool_type)
 
@@ -111,9 +120,11 @@ def wrap_responses_tool_as_function(tool: dict[str, Any]) -> dict[str, Any] | No
 def convert_tools(tools: Any) -> list[dict[str, Any]]:
     if not isinstance(tools, list):
         return []
+
     converted = [
         converted for tool in tools if (converted := convert_tool(tool)) is not None
     ]
+
     debug(f"tools: received={len(tools)} forwarded={len(converted)}")
     return converted
 
@@ -121,14 +132,18 @@ def convert_tools(tools: Any) -> list[dict[str, Any]]:
 def convert_tool_choice(choice: Any, tools: list[dict[str, Any]]) -> Any:
     if not tools:
         return None
+
     if choice in (None, "auto", "none", "required"):
         return choice
+
     if isinstance(choice, dict):
         if choice.get("type") == "function":
             if isinstance(choice.get("function"), dict):
                 return choice
+
             if choice.get("name"):
                 return {"type": "function", "function": {"name": choice["name"]}}
+
         if choice.get("type") in {"auto", "none", "required"}:
             return choice["type"]
     return "auto"

@@ -1,4 +1,4 @@
-"""Codex Desktop to llama.cpp proxy package."""
+"""LlamaProxy Codex to llama.cpp proxy package."""
 
 __all__ = ["__version__"]
 

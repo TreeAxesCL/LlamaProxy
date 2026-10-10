@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import logging
 import traceback
+
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -13,6 +15,7 @@ from .conversion import (
     responses_usage_from_chat_usage,
     stream_response_object,
 )
+
 from .upstream import llama_get, llama_request, parse_sse_data
 from .utils import (
     debug,
@@ -26,6 +29,7 @@ from .utils import (
     sse_done,
     sse_frame,
 )
+
 from . import utils
 
 
@@ -44,10 +48,12 @@ def stream_chat_as_responses(
     handler.close_connection = True
     handler.end_headers()
 
+    # Helper function to write SSE frames to the client
     def write(event: str, data: Any) -> None:
         handler.wfile.write(sse_frame(event, data))
         handler.wfile.flush()
 
+    # Create the initial response and output item structures
     response_base = {
         "id": rid,
         "object": "response",
@@ -56,6 +62,8 @@ def stream_chat_as_responses(
         "model": model,
         "output": [],
     }
+
+    # Create the initial output item structure
     output_item = {
         "id": oid,
         "type": "message",
@@ -65,10 +73,12 @@ def stream_chat_as_responses(
     }
 
     write("response.created", {"type": "response.created", "response": response_base})
+
     write(
         "response.output_item.added",
         {"type": "response.output_item.added", "output_index": 0, "item": output_item},
     )
+
     write(
         "response.content_part.added",
         {
@@ -84,10 +94,13 @@ def stream_chat_as_responses(
         data_text = parse_sse_data(raw)
         if data_text is None:
             continue
+
         if data_text == "[DONE]":
             break
+
         try:
             chunk = json.loads(data_text)
+
         except json.JSONDecodeError:
             debug(f"bad upstream SSE data: {data_text[:200]}")
             continue
@@ -95,8 +108,10 @@ def stream_chat_as_responses(
         choice = (chunk.get("choices") or [{}])[0]
         delta = choice.get("delta") or {}
         piece = delta.get("content") or ""
+
         if not piece:
             continue
+
         full_text.append(piece)
         write(
             "response.output_text.delta",
@@ -109,6 +124,7 @@ def stream_chat_as_responses(
             },
         )
 
+    # After the streaming is complete, send the final output text and mark the response as completed
     text = "".join(full_text)
     write(
         "response.output_text.done",
@@ -120,6 +136,8 @@ def stream_chat_as_responses(
             "text": text,
         },
     )
+
+    # Mark the content part as completed and send the final response
     write(
         "response.content_part.done",
         {
@@ -130,6 +148,8 @@ def stream_chat_as_responses(
             "part": {"type": "output_text", "text": text, "annotations": []},
         },
     )
+
+    # Mark the output item as completed and send the final response
     completed_item = {
         "id": oid,
         "type": "message",
@@ -145,6 +165,8 @@ def stream_chat_as_responses(
             "item": completed_item,
         },
     )
+
+    # Mark the response as completed and send the final response
     completed_response = {
         **response_base,
         "status": "completed",
@@ -155,15 +177,16 @@ def stream_chat_as_responses(
         "response.completed",
         {"type": "response.completed", "response": completed_response},
     )
+
     handler.wfile.write(sse_done())
     handler.wfile.flush()
 
 
 class ProxyHandler(BaseHTTPRequestHandler):
-    server_version = "CodexLlamaProxy/0.1"
+    server_version = "LlamaProxy/1.0"
     config = Config()
 
-    def log_message(self, fmt: str, *args: Any) -> None:
+    def log_message(self, fmt: str, *args: Any) -> None:  # type: ignore
         debug("%s - %s" % (self.address_string(), fmt % args))
 
     def do_GET(self) -> None:
@@ -189,19 +212,23 @@ class ProxyHandler(BaseHTTPRequestHandler):
             if self.path == "/v1/chat/completions":
                 payload = read_json(self)
                 stream = bool(payload.get("stream"))
+
                 upstream = llama_request(
                     "/chat/completions", payload, stream, self.config.llama_base_url
                 )
+
                 if stream:
                     self.send_response(upstream.status)
                     self.send_header(
                         "content-type",
                         upstream.headers.get("content-type", "text/event-stream"),
                     )
+
                     self.end_headers()
                     for chunk in upstream:
                         self.wfile.write(chunk)
                     self.wfile.flush()
+
                 else:
                     body = upstream.read()
                     self.send_response(upstream.status)
@@ -209,6 +236,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
                         "content-type",
                         upstream.headers.get("content-type", "application/json"),
                     )
+
                     self.send_header("content-length", str(len(body)))
                     self.end_headers()
                     self.wfile.write(body)
@@ -246,6 +274,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 )
             )
 
+            # Convert the Responses request payload to a Chat Completions request payload
             chat_payload = responses_to_chat_request(payload, self.config.model)
             debug(json.dumps({"chat_payload": chat_payload}, ensure_ascii=False)[:4000])
 
@@ -256,11 +285,15 @@ class ProxyHandler(BaseHTTPRequestHandler):
             upstream = llama_request(
                 "/chat/completions", chat_payload, False, self.config.llama_base_url
             )
+
+            # Read the upstream response body and convert it to a Responses response payload
             chat_body = upstream.read()
             chat_json = json.loads(chat_body.decode("utf-8"))
             responses_json = responses_payload_from_chat(
                 chat_json, chat_payload["model"]
             )
+
+            # If the client requested streaming, stream the Responses response payload as SSE events.
             if client_wants_stream:
                 stream_response_object(self, responses_json)
                 return
@@ -276,12 +309,14 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self.send_header("content-length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
+
         except (URLError, ConnectionError) as exc:
             send_error(
                 self,
                 502,
-                f"failed to reach llama.cpp at {self.config.llama_base_url}: {exc}",
+                f"Failed to reach llama.cpp at {self.config.llama_base_url}: {exc}",
             )
+
         except Exception as exc:
             if self.config.debug:
                 traceback.print_exc()
@@ -290,18 +325,21 @@ class ProxyHandler(BaseHTTPRequestHandler):
 
 def main() -> int:
     config = load_config()
-    import logging
 
     utils.DEBUG = config.debug
     logging.basicConfig(level=logging.DEBUG if config.debug else logging.INFO)
+
     utils.logger.setLevel("DEBUG" if config.debug else "INFO")
     handler = type("ConfiguredProxyHandler", (ProxyHandler,), {"config": config})
+
     server = ThreadingHTTPServer((config.host, config.port), handler)
-    log(f"proxy listening on http://{config.host}:{config.port}/v1")
-    log(f"forwarding to {config.llama_base_url}")
+
+    log(f" Proxy listening on http://{config.host}:{config.port}/v1")
+    log(f" Forwarding to {config.llama_base_url}")
+
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        log("stopping")
+        log(" Stopping the Proxy...")
         return 0
     return 0
