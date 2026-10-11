@@ -4,14 +4,14 @@ Estas instrucciones aplican a cualquier agente que trabaje en este repositorio. 
 
 ## Mapa del proyecto
 
-- `src/codex_llamacpp_proxy/config.py`: defaults, lectura TOML, entorno, CLI y validación.
-- `src/codex_llamacpp_proxy/server.py`: rutas HTTP y arranque del servidor.
-- `src/codex_llamacpp_proxy/conversion.py`: conversión Responses API ↔ Chat Completions, incluidas respuestas SSE.
-- `src/codex_llamacpp_proxy/tools.py`: conversión actual de definiciones y elecciones de herramientas.
-- `src/codex_llamacpp_proxy/upstream.py`: transporte HTTP hacia llama.cpp.
-- `src/codex_llamacpp_proxy/utils.py`: helpers JSON/SSE, identificadores y logging compartidos.
-- `src/codex_llamacpp_proxy/proxy.py`: fachada de compatibilidad para imports antiguos.
-- `src/codex_llamacpp_proxy/__main__.py`: entrada `python -m codex_llamacpp_proxy`.
+- `src/llamaproxy/config.py`: defaults, lectura TOML, entorno, CLI y validación.
+- `src/llamaproxy/server.py`: rutas HTTP y arranque del servidor.
+- `src/llamaproxy/conversion.py`: conversión Responses API ↔ Chat Completions, incluidas respuestas SSE.
+- `src/llamaproxy/tools.py`: conversión actual de definiciones y elecciones de herramientas.
+- `src/llamaproxy/upstream.py`: transporte HTTP hacia llama.cpp.
+- `src/llamaproxy/utils.py`: helpers JSON/SSE, identificadores y logging compartidos.
+- `src/llamaproxy/proxy.py`: fachada de compatibilidad para imports antiguos.
+- `src/llamaproxy/__main__.py`: entrada `python -m llamaproxy`.
 - `tests/`: pruebas de configuración, conversiones, streaming, transporte y endpoints.
 - `README.es.md` y `config.toml.example`: documentación y configuración de referencia.
 

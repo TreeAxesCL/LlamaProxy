@@ -9,7 +9,7 @@ Usa esta skill para tareas que cambien cómo se configura el proxy.
 
 ## Fuente de verdad
 
-`src/codex_llamacpp_proxy/config.py` define `Config`, los defaults y la resolución de valores. Mantén el orden **CLI > entorno > TOML > defaults**. Python 3.11+ incluye `tomllib`; no agregues una dependencia para leer TOML.
+`src/llamaproxy/config.py` define `Config`, los defaults y la resolución de valores. Mantén el orden **CLI > entorno > TOML > defaults**. Python 3.11+ incluye `tomllib`; no agregues una dependencia para leer TOML.
 
 El ejemplo público está en `config.toml.example`. La guía en español está en `README.es.md`. El archivo `config.toml` es la configuración activa del repositorio y debe corresponder al ejemplo salvo que el usuario pida valores distintos.
 

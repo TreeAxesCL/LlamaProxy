@@ -5,12 +5,12 @@ build-backend = "hatchling.build"
 [project]
 name = "llamaproxy"
 version = "1.0.0"
-description = "Integrates Codex with llama.cpp, enabling the use of LLMs in a local environment."
-readme = "README.es.md"
-requires-python = ">=3.11"
+description = "A proxy for integrate OpenAI Codex with llama.cpp for use in local LLMs."
+readme = "README.md"
+requires-python = ">=3.13"
 license = { file = "LICENSE" }
 authors = [
-    { name = "codex-llamacpp-proxy contributors" },
+    { name = "LlamaProxy and codex-llamacpp-proxy contributors" }
 ]
 dependencies = []
 
@@ -22,9 +22,9 @@ dev = [
 ]
 
 [project.scripts]
-codex-llamacpp-proxy = "codex_llamacpp_proxy.server:main"
+llamaproxy = "llamaproxy:main"
 
 [tool.pytest.ini_options]
-addopts = "--cov=codex_llamacpp_proxy"
+addopts = "--cov=llamaproxy"
 pythonpath = ["src"]
 testpaths = ["tests"]

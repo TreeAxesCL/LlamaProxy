@@ -9,7 +9,7 @@ Usa esta skill cuando una tarea cambie el comportamiento o la estructura del pro
 
 ## Responsabilidades
 
-- Rutas y ciclo de vida HTTP: `src/codex_llamacpp_proxy/server.py`.
+- Rutas y ciclo de vida HTTP: `src/llamaproxy/server.py`.
 - Conversiones de mensajes y respuestas, incluidas respuestas SSE: `conversion.py`.
 - Transformación actual de definiciones `tools` y `tool_choice`: `tools.py`.
 - Solicitudes HTTP upstream: `upstream.py`.
