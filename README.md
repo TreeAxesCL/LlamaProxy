@@ -24,8 +24,8 @@ The current tool conversion only adapts formats. The proxy does not execute exte
 ## Project structure
 
 ```text
-src/codex_llamacpp_proxy/
-├── __main__.py       # python -m codex_llamacpp_proxy
+src/llamaproxy/
+├── __main__.py       # python -m llamaproxy
 ├── config.py         # defaults, TOML, environment, CLI, and validation
 ├── conversion.py     # messages, responses, and Responses SSE events
 ├── server.py         # HTTP routes and startup
@@ -54,16 +54,16 @@ TOML is read with `tomllib` from the Python standard library; no TOML dependency
 With the defaults, the proxy listens on `127.0.0.1:8090` and forwards requests to `http://127.0.0.1:8000/v1`:
 
 ```bash
-python -m codex_llamacpp_proxy
+python -m llamaproxy
 ```
 
 Override the main options from the CLI:
 
 ```bash
-python -m codex_llamacpp_proxy --host 127.0.0.1 --port 8090
-python -m codex_llamacpp_proxy --port 8090
-python -m codex_llamacpp_proxy --llama-base-url http://127.0.0.1:8000/v1
-python -m codex_llamacpp_proxy --model local-model --debug
+python -m llamaproxy --host 127.0.0.1 --port 8090
+python -m llamaproxy --port 8090
+python -m llamaproxy --llama-base-url http://127.0.0.1:8000/v1
+python -m llamaproxy --model local-model --debug
 ```
 
 Point the client's Responses API base URL to the proxy, for example `http://127.0.0.1:8090/v1`.
@@ -88,7 +88,7 @@ debug = false
 Pass the file at startup:
 
 ```bash
-python -m codex_llamacpp_proxy --config config.toml
+python -m llamaproxy --config config.toml
 ```
 
 Without `--config`, the proxy uses defaults; it does not search for or create a config file automatically. A specified file that is missing or contains invalid TOML produces an error.
