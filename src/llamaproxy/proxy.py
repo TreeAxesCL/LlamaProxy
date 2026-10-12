@@ -1,7 +1,7 @@
 """Backward-compatible imports; implementation lives in focused modules."""
 
 from . import config, conversion, server, tools, upstream, utils
-from .config import DEFAULT_HOST, DEFAULT_PORT, DEFAULT_LLAMA_BASE_URL
+from .config import DEFAULT_HOST, DEFAULT_LLAMA_BASE_URL, DEFAULT_PORT
 
 HOST = DEFAULT_HOST
 PORT = DEFAULT_PORT

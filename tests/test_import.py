@@ -1,4 +1,4 @@
-from codex_llamacpp_proxy.proxy import responses_usage_from_chat_usage
+from llamaproxy.proxy import responses_usage_from_chat_usage
 
 
 def test_responses_usage_defaults_when_chat_usage_is_missing() -> None:

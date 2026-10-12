@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from codex_llamacpp_proxy.config import (
+from llamaproxy.config import (
+    DEFAULT_LLAMA_BASE_URL,
     Config,
     ConfigError,
-    DEFAULT_LLAMA_BASE_URL,
     load_config,
 )
 

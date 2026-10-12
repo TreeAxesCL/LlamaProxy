@@ -7,7 +7,7 @@ name = "llamaproxy"
 version = "1.0.0"
 description = "A proxy for integrate OpenAI Codex with llama.cpp for use in local LLMs."
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 license = { file = "LICENSE" }
 authors = [
     { name = "LlamaProxy and codex-llamacpp-proxy contributors" }
@@ -22,7 +22,7 @@ dev = [
 ]
 
 [project.scripts]
-llamaproxy = "llamaproxy:main"
+llamaproxy = "llamaproxy.server:main"
 
 [tool.pytest.ini_options]
 addopts = "--cov=llamaproxy"

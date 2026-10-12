@@ -5,9 +5,9 @@ from __future__ import annotations
 import argparse
 import os
 import tomllib
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Mapping
 from urllib.parse import urlsplit
 
 DEFAULT_HOST = "127.0.0.1"

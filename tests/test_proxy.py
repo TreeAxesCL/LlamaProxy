@@ -1,4 +1,4 @@
-"""Division coverage tests for codex_llamacpp_proxy.proxy.
+"""Division coverage tests for llamaproxy.proxy.
 
 Tests every branch/decision point in proxy.py. Network calls (urlopen) are
 mocked via unittest.mock.patch so that no real HTTP connections are made.
@@ -6,70 +6,71 @@ mocked via unittest.mock.patch so that no real HTTP connections are made.
 
 from __future__ import annotations
 
-import json
-import time
-import threading
 import http.server
+import json
+import threading
+import time
 from http.server import BaseHTTPRequestHandler
 from io import BytesIO
-from unittest.mock import patch, MagicMock
-
-import pytest
+from unittest.mock import MagicMock, patch
 from urllib.error import HTTPError, URLError
 
-from codex_llamacpp_proxy.proxy import (
+import pytest
+
+from llamaproxy.proxy import (
+    DEBUG,
     # constants / module-level vars
     HOST,
-    PORT,
     LLAMA_BASE_URL,
-    DEBUG,
-    # logging
-    log,
-    debug as debug_fn,
-    # time / id helpers
-    now_unix,
-    response_id,
-    output_id,
-    call_id,
-    # payload helpers
-    error_payload,
-    read_json,
-    send_json,
-    send_error,
-    sse_frame,
-    sse_done,
-    # content extraction
-    text_from_content_part,
-    normalize_role,
-    input_item_to_message,
-    responses_input_to_messages,
-    strip_assistant_prefill,
-    # tool conversion
-    convert_tool,
-    sanitize_function_name,
-    default_parameters_for_responses_tool,
-    wrap_responses_tool_as_function,
-    convert_tools,
-    convert_tool_choice,
-    # request / response conversion
-    responses_to_chat_request,
-    chat_message_to_output_text,
-    normalize_tool_arguments,
-    chat_tool_calls_to_response_items,
-    responses_usage_from_chat_usage,
-    responses_payload_from_chat,
-    # streaming helpers
-    stream_response_object,
-    llama_request,
-    llama_get,
-    parse_sse_data,
-    stream_chat_as_responses,
+    PORT,
     # HTTP handler
     ProxyHandler,
+    call_id,
+    chat_message_to_output_text,
+    chat_tool_calls_to_response_items,
+    # tool conversion
+    convert_tool,
+    convert_tool_choice,
+    convert_tools,
+    default_parameters_for_responses_tool,
+    # payload helpers
+    error_payload,
+    input_item_to_message,
+    llama_get,
+    llama_request,
+    # logging
+    log,
     # CLI entry point
     main,
+    normalize_role,
+    normalize_tool_arguments,
+    # time / id helpers
+    now_unix,
+    output_id,
+    parse_sse_data,
+    read_json,
+    response_id,
+    responses_input_to_messages,
+    responses_payload_from_chat,
+    # request / response conversion
+    responses_to_chat_request,
+    responses_usage_from_chat_usage,
+    sanitize_function_name,
+    send_error,
+    send_json,
+    sse_done,
+    sse_frame,
+    stream_chat_as_responses,
+    # streaming helpers
+    stream_response_object,
+    strip_assistant_prefill,
+    # content extraction
+    text_from_content_part,
+    wrap_responses_tool_as_function,
 )
-
+from llamaproxy.proxy import (
+    debug as debug_fn,
+)
 
 # ─── Fixtures / helpers ────────────────────────────────────────────────────────
 
@@ -144,19 +145,19 @@ class TestModuleConstants:
 
 
 class TestLogDebug:
-    @patch("codex_llamacpp_proxy.utils.logger.info")
+    @patch("llamaproxy.utils.logger.info")
     def test_log_writes_to_stderr(self, mock_log):
         log("test message")
         mock_log.assert_called_once_with("test message")
 
-    @patch("codex_llamacpp_proxy.utils.DEBUG", True)
-    @patch("codex_llamacpp_proxy.utils.logger.debug")
+    @patch("llamaproxy.utils.DEBUG", True)
+    @patch("llamaproxy.utils.logger.debug")
     def test_debug_when_enabled(self, mock_debug):
         debug_fn("debug msg")
         mock_debug.assert_called_once_with("debug msg")
 
-    @patch("codex_llamacpp_proxy.utils.DEBUG", False)
-    @patch("codex_llamacpp_proxy.utils.logger.debug")
+    @patch("llamaproxy.utils.DEBUG", False)
+    @patch("llamaproxy.utils.logger.debug")
     def test_debug_when_disabled(self, mock_debug):
         debug_fn("debug msg")
         mock_debug.assert_not_called()
@@ -927,7 +928,7 @@ class TestConvertToolChoice:
 
 class TestResponsesToChatRequest:
     def test_missing_model_raises(self):
-        with patch("codex_llamacpp_proxy.proxy.FALLBACK_MODEL", None):
+        with patch("llamaproxy.proxy.FALLBACK_MODEL", None):
             with pytest.raises(ValueError, match="missing model"):
                 responses_to_chat_request({})
 
@@ -1007,7 +1008,7 @@ class TestResponsesToChatRequest:
         assert result["tool_choice"] == "auto"
 
     def test_model_from_payload_takes_precedence(self):
-        with patch("codex_llamacpp_proxy.proxy.FALLBACK_MODEL", "fallback"):
+        with patch("llamaproxy.proxy.FALLBACK_MODEL", "fallback"):
             result = responses_to_chat_request({"model": "gpt-4", "input": "hi"})
             assert result["model"] == "gpt-4"
 
@@ -1312,7 +1313,7 @@ class TestParseSseData:
 
     def test_utf8_in_data(self):
         # Use actual UTF-8 bytes for "こんにちは"
-        utf8_bytes = "こんにちは".encode("utf-8")
+        utf8_bytes = "こんにちは".encode()
         result = parse_sse_data(b"data: " + utf8_bytes)
         assert result == "こんにちは"
 
@@ -1463,7 +1464,7 @@ class TestStreamResponseObject:
 
 
 class TestLlamaRequest:
-    @patch("codex_llamacpp_proxy.upstream.urlopen")
+    @patch("llamaproxy.upstream.urlopen")
     def test_llama_request_posts_json(self, mock_urlopen):
         mock_resp = MagicMock()
         mock_urlopen.return_value = mock_resp
@@ -1478,7 +1479,7 @@ class TestLlamaRequest:
             or req.headers.get("content-type") == "application/json"
         )
 
-    @patch("codex_llamacpp_proxy.upstream.urlopen")
+    @patch("llamaproxy.upstream.urlopen")
     def test_llama_request_stream_accept(self, mock_urlopen):
         mock_urlopen.return_value = MagicMock()
         llama_request("/chat/completions", {}, True)
@@ -1489,7 +1490,7 @@ class TestLlamaRequest:
             or req.headers.get("accept") == "text/event-stream"
         )
 
-    @patch("codex_llamacpp_proxy.upstream.urlopen")
+    @patch("llamaproxy.upstream.urlopen")
     def test_llama_request_non_stream_accept(self, mock_urlopen):
         mock_urlopen.return_value = MagicMock()
         llama_request("/chat/completions", {}, False)
@@ -1502,7 +1503,7 @@ class TestLlamaRequest:
 
 
 class TestLlamaGet:
-    @patch("codex_llamacpp_proxy.upstream.urlopen")
+    @patch("llamaproxy.upstream.urlopen")
     def test_llama_get_success(self, mock_urlopen):
         mock_resp = MagicMock()
         mock_resp.status = 200
@@ -1517,7 +1518,7 @@ class TestLlamaGet:
         assert body == b'{"models": []}'
         assert ct == "application/json"
 
-    @patch("codex_llamacpp_proxy.upstream.urlopen")
+    @patch("llamaproxy.upstream.urlopen")
     def test_llama_get_http_error(self, mock_urlopen):
         # Create a real HTTPError-like exception with required attributes
         mock_resp = MagicMock()
@@ -1541,7 +1542,7 @@ class TestLlamaGet:
 
 
 class TestProxyHandlerGet:
-    @patch("codex_llamacpp_proxy.server.llama_get")
+    @patch("llamaproxy.server.llama_get")
     def test_health(self, mock_llama_get):
         mock_llama_get.return_value = (200, b'{"ok": true}', "application/json")
         server, url = _start_http_server(
@@ -1558,7 +1559,7 @@ class TestProxyHandlerGet:
         finally:
             server.shutdown()
 
-    @patch("codex_llamacpp_proxy.server.llama_get")
+    @patch("llamaproxy.server.llama_get")
     def test_v1_health(self, mock_llama_get):
         mock_llama_get.return_value = (200, b'{"ok": true}', "application/json")
         server, url = _start_http_server(
@@ -1573,7 +1574,7 @@ class TestProxyHandlerGet:
         finally:
             server.shutdown()
 
-    @patch("codex_llamacpp_proxy.server.llama_get")
+    @patch("llamaproxy.server.llama_get")
     def test_v1_models_proxies(self, mock_llama_get):
         mock_llama_get.return_value = (
             200,
@@ -1594,7 +1595,7 @@ class TestProxyHandlerGet:
         finally:
             server.shutdown()
 
-    @patch("codex_llamacpp_proxy.server.llama_get")
+    @patch("llamaproxy.server.llama_get")
     def test_unknown_endpoint_returns_404(self, mock_llama_get):
         server, url = _start_http_server(
             lambda *a, **kw: type("H", (ProxyHandler,), {})(*a, **kw)
@@ -1613,7 +1614,7 @@ class TestProxyHandlerGet:
 
 
 class TestProxyHandlerChatCompletionsPassthrough:
-    @patch("codex_llamacpp_proxy.server.llama_request")
+    @patch("llamaproxy.server.llama_request")
     def test_non_stream_passthrough(self, mock_llama_request):
         mock_upstream = MagicMock()
         mock_upstream.status = 200
@@ -1639,7 +1640,7 @@ class TestProxyHandlerChatCompletionsPassthrough:
         finally:
             server.shutdown()
 
-    @patch("codex_llamacpp_proxy.server.llama_request")
+    @patch("llamaproxy.server.llama_request")
     def test_stream_passthrough(self, mock_llama_request):
         mock_upstream = MagicMock()
         mock_upstream.status = 200
@@ -1668,7 +1669,7 @@ class TestProxyHandlerChatCompletionsPassthrough:
 
 
 class TestProxyHandlerResponsesEndpoint:
-    @patch("codex_llamacpp_proxy.server.llama_request")
+    @patch("llamaproxy.server.llama_request")
     def test_basic_conversion_and_response(self, mock_llama_request):
         mock_upstream = MagicMock()
         mock_upstream.read.return_value = json.dumps(
@@ -1703,7 +1704,7 @@ class TestProxyHandlerResponsesEndpoint:
         finally:
             server.shutdown()
 
-    @patch("codex_llamacpp_proxy.server.llama_request")
+    @patch("llamaproxy.server.llama_request")
     def test_streaming_responses(self, mock_llama_request):
         mock_upstream = MagicMock()
         mock_upstream.read.return_value = json.dumps(
@@ -1736,7 +1737,7 @@ class TestProxyHandlerResponsesEndpoint:
         finally:
             server.shutdown()
 
-    @patch("codex_llamacpp_proxy.server.llama_request")
+    @patch("llamaproxy.server.llama_request")
     def test_unknown_post_endpoint(self, mock_llama_request):
         server, url = _start_http_server(
             lambda *a, **kw: type("H", (ProxyHandler,), {})(*a, **kw)
@@ -1754,7 +1755,7 @@ class TestProxyHandlerResponsesEndpoint:
         finally:
             server.shutdown()
 
-    @patch("codex_llamacpp_proxy.server.llama_request")
+    @patch("llamaproxy.server.llama_request")
     def test_llama_http_error_propagated(self, mock_llama_request):
         mock_exc = HTTPError(
             "http://localhost/v1/chat/completions",
@@ -1782,7 +1783,7 @@ class TestProxyHandlerResponsesEndpoint:
         finally:
             server.shutdown()
 
-    @patch("codex_llamacpp_proxy.server.llama_request")
+    @patch("llamaproxy.server.llama_request")
     def test_llama_url_error_returns_502(self, mock_llama_request):
         mock_llama_request.side_effect = URLError("connection refused")
 
@@ -1804,7 +1805,7 @@ class TestProxyHandlerResponsesEndpoint:
         finally:
             server.shutdown()
 
-    @patch("codex_llamacpp_proxy.server.llama_request")
+    @patch("llamaproxy.server.llama_request")
     def test_general_exception_returns_500(self, mock_llama_request):
         mock_llama_request.side_effect = ValueError("bad payload")
 
@@ -1884,8 +1885,8 @@ class TestStreamChatAsResponses:
 
 
 class TestMain:
-    @patch("codex_llamacpp_proxy.server.ThreadingHTTPServer")
-    @patch("codex_llamacpp_proxy.utils.log")
+    @patch("llamaproxy.server.ThreadingHTTPServer")
+    @patch("llamaproxy.utils.log")
     def test_main_starts_server(self, mock_log, mock_server_cls):
         mock_server = MagicMock()
         mock_server_cls.return_value = mock_server
@@ -1909,7 +1910,7 @@ class TestMain:
         mock_server_cls.assert_called_once()
         mock_server.serve_forever.assert_called_once()
 
-    @patch("codex_llamacpp_proxy.server.ThreadingHTTPServer")
+    @patch("llamaproxy.server.ThreadingHTTPServer")
     def test_main_keyboard_interrupt(self, mock_server_cls):
         mock_server = MagicMock()
         mock_server.serve_forever.side_effect = KeyboardInterrupt()
@@ -1920,7 +1921,7 @@ class TestMain:
 
         assert result == 0
 
-    @patch("codex_llamacpp_proxy.server.ThreadingHTTPServer")
+    @patch("llamaproxy.server.ThreadingHTTPServer")
     def test_main_default_args(self, mock_server_cls):
         mock_server = MagicMock()
         mock_server_cls.return_value = mock_server
@@ -1932,7 +1933,7 @@ class TestMain:
         assert args[0] == "127.0.0.1"
         assert args[1] == 8090
 
-    @patch("codex_llamacpp_proxy.server.ThreadingHTTPServer")
+    @patch("llamaproxy.server.ThreadingHTTPServer")
     def test_main_trims_trailing_slash(self, mock_server_cls):
         mock_server = MagicMock()
         mock_server_cls.return_value = mock_server

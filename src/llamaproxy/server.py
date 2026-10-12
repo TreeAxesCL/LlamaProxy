@@ -3,11 +3,11 @@ from __future__ import annotations
 import json
 import logging
 import traceback
-
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 from urllib.error import HTTPError, URLError
 
+from . import utils
 from .config import Config, load_config
 from .conversion import (
     responses_payload_from_chat,
@@ -15,7 +15,6 @@ from .conversion import (
     responses_usage_from_chat_usage,
     stream_response_object,
 )
-
 from .upstream import llama_get, llama_request, parse_sse_data
 from .utils import (
     debug,
@@ -29,8 +28,6 @@ from .utils import (
     sse_done,
     sse_frame,
 )
-
-from . import utils
 
 
 def stream_chat_as_responses(
@@ -187,7 +184,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
     config = Config()
 
     def log_message(self, fmt: str, *args: Any) -> None:  # type: ignore
-        debug("%s - %s" % (self.address_string(), fmt % args))
+        debug(f"{self.address_string()} - {fmt % args}")
 
     def do_GET(self) -> None:
         if self.path in {"/health", "/v1/health"}:

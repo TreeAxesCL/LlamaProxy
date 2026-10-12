@@ -7,7 +7,7 @@ import uuid
 from http.server import BaseHTTPRequestHandler
 from typing import Any
 
-logger = logging.getLogger("codex_llamacpp_proxy")
+logger = logging.getLogger("llamaproxy")
 DEBUG = False
 
 
@@ -79,7 +79,7 @@ def send_error(handler: BaseHTTPRequestHandler, status: int, message: str) -> No
 
 def sse_frame(event: str, data: Any) -> bytes:
     text = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-    return f"event: {event}\ndata: {text}\n\n".encode("utf-8")
+    return f"event: {event}\ndata: {text}\n\n".encode()
 
 
 def sse_done() -> bytes:
